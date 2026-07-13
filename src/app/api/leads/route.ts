@@ -1,13 +1,39 @@
 import { NextResponse } from "next/server";
 
 import { getPrisma } from "@/lib/prisma";
+import { allowRequest } from "@/lib/rate-limit";
+
+const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+function text(value: unknown, max: number) {
+  return typeof value === "string" ? value.trim().slice(0, max) : "";
+}
 
 export async function POST(request: Request) {
-  const body = await request.json().catch(() => null);
+  const origin = request.headers.get("origin");
+  const requestHost = request.headers.get("x-forwarded-host") || request.headers.get("host") || new URL(request.url).host;
+  if (!origin || new URL(origin).host !== requestHost) {
+    return NextResponse.json({ error: "Origem não permitida." }, { status: 403 });
+  }
 
-  if (!body?.name || !body?.email || !body?.message) {
+  const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "local";
+  const attempt = allowRequest(`lead:${ip}`);
+  if (!attempt.allowed) {
+    return NextResponse.json({ error: "Muitas tentativas. Tente novamente mais tarde." }, { status: 429, headers: { "Retry-After": String(attempt.retryAfter) } });
+  }
+
+  const body = await request.json().catch(() => null);
+  const input = {
+    name: text(body?.name, 100),
+    email: text(body?.email, 160).toLowerCase(),
+    company: text(body?.company, 120),
+    budget: text(body?.budget, 80),
+    message: text(body?.message, 3000),
+  };
+
+  if (input.name.length < 2 || !EMAIL.test(input.email) || input.message.length < 10) {
     return NextResponse.json(
-      { error: "Name, email and message are required." },
+      { error: "Revise nome, e-mail e mensagem." },
       { status: 400 },
     );
   }
@@ -15,23 +41,18 @@ export async function POST(request: Request) {
   try {
     const lead = await getPrisma().lead.create({
       data: {
-        name: String(body.name),
-        email: String(body.email),
-        company: body.company ? String(body.company) : null,
-        budget: body.budget ? String(body.budget) : null,
-        message: String(body.message),
+        name: input.name,
+        email: input.email,
+        company: input.company || null,
+        budget: input.budget || null,
+        message: input.message,
       },
     });
 
     return NextResponse.json({ id: lead.id }, { status: 201 });
-  } catch (error) {
+  } catch {
     return NextResponse.json(
-      {
-        error:
-          error instanceof Error
-            ? error.message
-            : "Unable to persist lead at this moment.",
-      },
+      { error: "Não foi possível enviar agora. Tente novamente mais tarde." },
       { status: 503 },
     );
   }

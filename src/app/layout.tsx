@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://cauapetry.com"),
+  metadataBase: new URL("https://caua-petry-site.vercel.app"),
   title: {
     default: "Cauã Petry | Ecossistema Digital para Empresas",
     template: "%s | Cauã Petry",
@@ -38,12 +38,14 @@ export const metadata: Metadata = {
     locale: "pt_BR",
     siteName: "Cauã Petry",
     url: "/",
+    images: [{ url: "/assets/hero-command-center.png", width: 1200, height: 630, alt: "Portfólio de Cauã Petry" }],
   },
   twitter: {
     card: "summary_large_image",
     title: "Cauã Petry | Ecossistema Digital para Empresas",
     description:
       "Ecossistema digital para empresas que querem vender como grandes marcas.",
+    images: ["/assets/hero-command-center.png"],
   },
   robots: {
     index: true,
@@ -55,7 +57,7 @@ const structuredData = {
   "@context": "https://schema.org",
   "@type": "ProfessionalService",
   name: "Cauã Petry",
-  url: "https://cauapetry.com",
+  url: "https://caua-petry-site.vercel.app",
   areaServed: "Brasil",
   serviceType: [
     "Ecossistema digital para empresas",
@@ -85,7 +87,7 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col">
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData).replace(/</g, "\\u003c") }}
         />
         {children}
       </body>
