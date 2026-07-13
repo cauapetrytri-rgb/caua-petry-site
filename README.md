@@ -69,6 +69,10 @@ DATABASE_URL
 
 Credenciais reais permanecem fora do repositório. A publicação pode exibir a interface sem banco, mas o envio do formulário retorna um erro seguro até que `DATABASE_URL` seja configurada.
 
+## Licença
+
+Código publicado para avaliação de portfólio. Nenhuma licença de reutilização comercial é concedida neste momento.
+
 ---
 
 Desenvolvido por [Cauã Petry](https://github.com/cauapetrytri-rgb).
